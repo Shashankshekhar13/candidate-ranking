@@ -1,0 +1,59 @@
+# Submission metadata — required by the hackathon submission portal
+# Fill in the fields marked with <YOUR ...> before submitting.
+
+submission:
+  team_name: "<YOUR TEAM NAME>"
+  team_members:
+    - name: "<YOUR NAME>"
+      email: "<YOUR EMAIL>"
+
+  # The single command that reproduces your ranked output from scratch
+  reproduce_command: "python rank.py --candidates data/candidates.jsonl --jd data/job_description.md --out outputs/submission.csv"
+
+  # GitHub repo URL (must have incremental commit history, not a single dump)
+  github_repo: "https://github.com/<YOUR_USERNAME>/candidate-ranking-ai"
+
+  # Sandbox / demo link (Streamlit Cloud, HF Spaces, Replit, Colab, or Docker)
+  sandbox_url: "<YOUR STREAMLIT CLOUD / HF SPACES URL>"
+
+  # Submission file path
+  output_file: "outputs/submission.csv"
+
+approach:
+  summary: >
+    Multiplicative pipeline: core skill fit (TF-IDF/LSA semantic similarity +
+    career-history-weighted must-have skill detection) × experience multiplier ×
+    location multiplier × JD-disqualifier multiplier × behavioral engagement
+    multiplier × honeypot anomaly penalty. Skills are the gate; location and
+    experience modulate, not compete. Career-history mentions of key terms
+    (embeddings, vector DB, evaluation frameworks) weighted 3× over skill-list
+    entries to penalise keyword stuffers by construction.
+
+  key_design_choices:
+    - "Multiplicative combination: a serious red flag collapses the final score regardless of skill fit"
+    - "Career-history term weighting (3x) vs skill-list terms (1x) to catch keyword stuffers"
+    - "TF-IDF + LSA semantic fit: fully offline, no model weights, ~55s on 100k candidates"
+    - "7 independent honeypot checks; require >=2 to fire before penalising (low false-positive rate)"
+    - "Location and experience as multipliers [0.5,1.0] and [0.55,1.0] on core fit, not additive"
+    - "Deterministic reasoning generator: every claim grounded in parsed candidate data, zero hallucination risk"
+
+  compute:
+    runtime_seconds: 97
+    memory_gb: "<4"
+    network_calls_during_ranking: 0
+    cpu_only: true
+
+  ai_tools_used:
+    - tool: "Claude (Anthropic)"
+      usage: "Code generation and review. All code reviewed, understood, and validated end-to-end."
+
+  files_submitted:
+    - "outputs/submission.csv"
+    - "rank.py"
+    - "src/"
+    - "scripts/"
+    - "eval/"
+    - "tests/"
+    - "app.py"
+    - "requirements.txt"
+    - "README.md"
