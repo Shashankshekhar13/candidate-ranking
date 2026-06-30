@@ -21,6 +21,12 @@ import pandas as pd
 # pyrefly: ignore [missing-import]
 import streamlit as st
 
+st.set_page_config(
+    page_title="TalentLens AI",
+    page_icon=" ",
+    layout="wide",
+)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src import config
@@ -176,13 +182,6 @@ def company_logo_html(company: str, size: int = 36) -> str:
         f'</span>'
     )
 
-
-# ── Page config ───────────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="TalentLens AI",
-    page_icon=" ",
-    layout="wide",
-)
 
 # ── Custom CSS for Premium Design ─────────────────────────────────────────────
 st.markdown("""
