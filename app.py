@@ -512,7 +512,7 @@ with st.sidebar:
     if "scored_candidates" in st.session_state:
         st.success("✅ Active workspace loaded")
         st.caption(f"Engine: **{st.session_state.model_used}**")
-        st.caption(f"Loaded size: **{len(st.session_state.features_list):,}** candidates")
+        st.caption(f"Loaded size: **{st.session_state.total_candidates:,}** candidates")
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
