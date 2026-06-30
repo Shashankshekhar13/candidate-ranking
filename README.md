@@ -10,11 +10,11 @@ keyword matching.
 python rank.py \
   --candidates data/candidates.jsonl \
   --jd data/job_description.md \
-  --out outputs/submission.csv
+  --out outputs/submission.xlsx
 ```
 
 Runtime: ~80s on CPU, well under the 300s/16GB/no-network budget.
-Validates cleanly with `python scripts/validate_submission.py outputs/submission.csv`.
+Validates cleanly with `python scripts/validate_submission.py outputs/submission.xlsx`.
 
 ## Architecture
 
