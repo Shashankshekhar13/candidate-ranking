@@ -20,7 +20,7 @@ st.set_page_config(
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src import config
-from src.data_loader import load_candidates, load_job_description
+from src.data_loader import load_candidates, load_job_description, iter_candidates
 from src.feature_extraction import extract_features
 from src.reasoning import generate_reasoning
 from src.scoring import composite
@@ -487,10 +487,18 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("🔍 Initial Engine Mode")
     
+    default_engine = st.session_state.get("initial_engine_mode", "BGE Dense Vectors (Precomputed)")
+    engine_options = ["BGE Dense Vectors (Precomputed)", "TF-IDF + LSA (Bag of Words)"]
+    try:
+        default_idx = engine_options.index(default_engine)
+    except ValueError:
+        default_idx = 0
+
     if cache_path.exists() or use_defaults:
         initial_engine = st.selectbox(
             "Semantic Engine",
-            ["BGE Dense Vectors (Precomputed)", "TF-IDF + LSA (Bag of Words)"],
+            engine_options,
+            index=default_idx,
             help="BGE dense embeddings represent semantic intent. TF-IDF + LSA models keyword matching patterns."
         )
     else:
@@ -521,92 +529,138 @@ def _load_from_upload(cand_bytes, jd_bytes):
 
 # ── Main Controller ───────────────────────────────────────────────────────────
 if run_btn:
-    with st.spinner("Loading talent pool and documents..."):
-        try:
-            if use_defaults:
-                ensure_data_files()
-                if not config.CANDIDATES_PATH.exists():
-                    st.error("data/candidates.jsonl not found. Upload a file instead.")
-                    st.stop()
-                candidates, jd_text = _load_from_disk()
-            else:
-                if not cand_file or not jd_file:
-                    st.error("Please upload both candidate pool and JD files.")
-                    st.stop()
-                candidates, jd_text = _load_from_upload(cand_file.read(), jd_file.read())
-        except Exception as e:
-            st.error(f"Failed to load dataset: {e}")
-            st.stop()
-
-    st.session_state.jd_text = jd_text
     st.session_state.start_time = time.time()
     
-    with st.spinner("Extracting multi-dimensional profile features..."):
-        features_list = [extract_features(c) for c in candidates]
-        st.session_state.features_list = features_list
-
-    # Run semantic mapping
-    with st.spinner("Mapping candidate profiles to semantic space..."):
-        use_bge = "BGE" in initial_engine
+    # 1. Load JD Text
+    try:
+        if use_defaults:
+            ensure_data_files()
+            jd_text = load_job_description(config.JD_PATH)
+        else:
+            if not cand_file or not jd_file:
+                st.error("Please upload both candidate pool and JD files.")
+                st.stop()
+            jd_text = jd_file.read().decode("utf-8")
+    except Exception as e:
+        st.error(f"Failed to load JD text: {e}")
+        st.stop()
         
-        # Verify if JD changed
-        jd_changed = jd_text.strip() != default_jd_text.strip()
-        
-        if use_bge and cache_path.exists():
-            if jd_changed:
-                st.warning("JD text changed from default. Falling back to TF-IDF engine (dense cache requires matching JD).")
-                texts = [f["full_text"] for f in features_list]
-                _, _, jd_vec, c_vecs = fit_semantic_space(jd_text, texts)
-                semantic_scores = score_semantic_fit_batch(jd_vec, c_vecs)
-                st.session_state.cache_used = False
-                st.session_state.model_used = "TF-IDF + LSA (Fallback)"
-            else:
-                try:
+    st.session_state.jd_text = jd_text
+    
+    # 2. Determine semantic model & scores
+    try:
+        if use_defaults:
+            use_bge = "BGE" in initial_engine
+            jd_changed = jd_text.strip() != default_jd_text.strip()
+            
+            if use_bge and cache_path.exists() and not jd_changed:
+                with st.spinner("Loading dense embeddings cache..."):
                     data = np.load(cache_path, allow_pickle=True)
-                    cached_ids = set(data["candidate_ids"])
-                    cids = [f["candidate_id"] for f in features_list]
-                    
-                    if all(cid in cached_ids for cid in cids):
-                        jd_emb = data["jd_embedding"]
-                        c_emb = data["candidate_embeddings"]
-                        cached_list = list(data["candidate_ids"])
-                        id2row = {cid: i for i, cid in enumerate(cached_list)}
-                        rows = [id2row[cid] for cid in cids]
-                        sims = (c_emb[rows] @ jd_emb.T).squeeze()
-                        semantic_scores = (sims + 1.0) / 2.0
-                        st.session_state.cache_used = True
-                        st.session_state.model_used = "BGE Dense Semantic Cache"
-                    else:
-                        st.warning("Candidate pool IDs differ from precomputed cache. Falling back to TF-IDF.")
-                        texts = [f["full_text"] for f in features_list]
-                        _, _, jd_vec, c_vecs = fit_semantic_space(jd_text, texts)
-                        semantic_scores = score_semantic_fit_batch(jd_vec, c_vecs)
-                        st.session_state.cache_used = False
-                        st.session_state.model_used = "TF-IDF + LSA (Fallback)"
-                except Exception as e:
-                    st.warning(f"Error loading embedding cache: {e}. Falling back to TF-IDF.")
-                    texts = [f["full_text"] for f in features_list]
+                    c_emb = data["candidate_embeddings"]
+                    jd_emb = data["jd_embedding"]
+                    sims = (c_emb @ jd_emb.T).squeeze()
+                    semantic_scores = (sims + 1.0) / 2.0
+                    st.session_state.cache_used = True
+                    st.session_state.model_used = "BGE Dense Semantic Cache"
+            else:
+                st.warning("Running TF-IDF on 100k candidates may exceed the 1GB RAM limit. If the app crashes, please use the default BGE engine.")
+                with st.spinner("Loading candidate profiles for TF-IDF..."):
+                    candidates = load_candidates(config.CANDIDATES_PATH)
+                with st.spinner("Fitting TF-IDF / LSA space..."):
+                    texts = []
+                    for c in candidates:
+                        feats = extract_features(c)
+                        texts.append(feats["full_text"])
                     _, _, jd_vec, c_vecs = fit_semantic_space(jd_text, texts)
                     semantic_scores = score_semantic_fit_batch(jd_vec, c_vecs)
                     st.session_state.cache_used = False
                     st.session_state.model_used = "TF-IDF + LSA (Fallback)"
         else:
-            texts = [f["full_text"] for f in features_list]
+            # Uploaded files are small, so load them fully
+            st.session_state.cache_used = False
+            st.session_state.model_used = "TF-IDF + LSA (Uploaded Data)"
+            cand_text = cand_file.read().decode("utf-8")
+            candidates = [json.loads(l) for l in cand_text.splitlines() if l.strip()]
+            texts = []
+            for c in candidates:
+                feats = extract_features(c)
+                texts.append(feats["full_text"])
             _, _, jd_vec, c_vecs = fit_semantic_space(jd_text, texts)
             semantic_scores = score_semantic_fit_batch(jd_vec, c_vecs)
-            st.session_state.cache_used = False
-            st.session_state.model_used = "TF-IDF + LSA (Bag-of-Words)"
-            
-        st.session_state.semantic_scores = semantic_scores
+    except Exception as e:
+        st.error(f"Failed to calculate semantic space: {e}")
+        st.stop()
 
-    # Run composite scoring
-    with st.spinner("Executing recruiter alignment scoring and anomalies scan..."):
-        results = [
-            {**composite.score_candidate(feats, float(sem)), "features": feats}
-            for feats, sem in zip(features_list, semantic_scores)
-        ]
-        results.sort(key=lambda r: (-r["final_score"], r["candidate_id"]))
-        st.session_state.scored_candidates = results
+    # 3. Stream, score, and aggregates
+    with st.spinner("Streaming, scoring, and verifying candidate pool..."):
+        total_candidates = 0
+        yoe_segment_counts = {"Entry (<2y)": 0, "Mid-level (2-5y)": 0, "Ideal Band (5-9y)": 0, "Senior (9-12y)": 0, "Executive (12y+)": 0}
+        loc_segment_counts = {"Target Cities (India)": 0, "Other India": 0, "Global": 0}
+        hp_flags_fired = []
+        total_hp = 0
+        top_candidates = []
+        
+        # Generator for streaming
+        if use_defaults:
+            cand_stream = iter_candidates(config.CANDIDATES_PATH)
+        else:
+            cand_stream = candidates
+            
+        for idx_row, c in enumerate(cand_stream):
+            total_candidates += 1
+            feats = extract_features(c)
+            sem_score = semantic_scores[idx_row]
+            
+            res = composite.score_candidate(feats, float(sem_score))
+            res["features"] = feats
+            
+            # Running aggregates
+            yoe = feats.get("years_of_experience")
+            if yoe is not None:
+                if yoe < 2:
+                    yoe_segment_counts["Entry (<2y)"] += 1
+                elif yoe <= 5:
+                    yoe_segment_counts["Mid-level (2-5y)"] += 1
+                elif yoe <= 9:
+                    yoe_segment_counts["Ideal Band (5-9y)"] += 1
+                elif yoe <= 12:
+                    yoe_segment_counts["Senior (9-12y)"] += 1
+                else:
+                    yoe_segment_counts["Executive (12y+)"] += 1
+                    
+            loc = (feats.get("location") or "").lower()
+            country = (feats.get("country") or "").lower()
+            in_target = any(city in loc for city in config.TARGET_CITIES)
+            in_india = country == "india" or any(city in loc for city in config.TARGET_CITIES)
+            if in_target:
+                loc_segment_counts["Target Cities (India)"] += 1
+            elif in_india:
+                loc_segment_counts["Other India"] += 1
+            else:
+                loc_segment_counts["Global"] += 1
+                
+            if res["is_honeypot_flagged"]:
+                total_hp += 1
+                for note in res["notes"]:
+                    if "HONEYPOT FLAGGED" in note:
+                        flags = note.replace("HONEYPOT FLAGGED:", "").strip().split(", ")
+                        hp_flags_fired.extend(flags)
+            
+            top_candidates.append(res)
+            if len(top_candidates) > 300:
+                top_candidates.sort(key=lambda r: (-round(r["final_score"], 6), r["candidate_id"]))
+                top_candidates = top_candidates[:200]
+                
+        # Final sort and store
+        top_candidates.sort(key=lambda r: (-round(r["final_score"], 6), r["candidate_id"]))
+        
+        st.session_state.scored_candidates = top_candidates
+        st.session_state.total_candidates = total_candidates
+        st.session_state.yoe_counts = pd.Series(yoe_segment_counts)
+        st.session_state.loc_counts = pd.Series(loc_segment_counts)
+        st.session_state.total_hp = total_hp
+        st.session_state.hp_counts = pd.Series(hp_flags_fired).value_counts() if hp_flags_fired else pd.Series()
+        
         st.session_state.elapsed_time = time.time() - st.session_state.start_time
         st.session_state.has_run = True
         
@@ -615,18 +669,15 @@ if run_btn:
 
 # ── Render UI ─────────────────────────────────────────────────────────────────
 if "has_run" in st.session_state and st.session_state.has_run:
-    # ── KPI Cards row ─────────────────────────────────────────────────────────
     scored_candidates = st.session_state.scored_candidates
-    features_list = st.session_state.features_list
     elapsed = st.session_state.elapsed_time
-    
-    total_hp = sum(1 for r in scored_candidates if r["is_honeypot_flagged"])
+    total_hp = st.session_state.total_hp
     top_score = scored_candidates[0]["final_score"] if scored_candidates else 0
     
     st.markdown(f"""
     <div class="kpi-container">
         <div class="kpi-card">
-            <div class="kpi-val">{len(features_list):,}</div>
+            <div class="kpi-val">{st.session_state.total_candidates:,}</div>
             <div class="kpi-label">Talent Pool Scored</div>
             <div class="kpi-subtext">All candidate profiles parsed</div>
             <div class="kpi-icon">👥</div>
@@ -646,7 +697,7 @@ if "has_run" in st.session_state and st.session_state.has_run:
         <div class="kpi-card">
             <div class="kpi-val">{total_hp:,}</div>
             <div class="kpi-label">Honeypots Screened</div>
-            <div class="kpi-subtext">{total_hp/len(scored_candidates):.2%} of pool isolated</div>
+            <div class="kpi-subtext">{total_hp/st.session_state.total_candidates:.2%} of pool isolated</div>
             <div class="kpi-icon">🛡️</div>
         </div>
     </div>
@@ -1000,43 +1051,11 @@ if "has_run" in st.session_state and st.session_state.has_run:
         st.markdown("### 📊 Talent Pool Statistical Analytics")
         st.markdown("Interactive distributions of profile attributes across the entire loaded candidate dataset.")
         
-        # 1. Experience segments mapping
-        yoe_list = [f.get("years_of_experience") for f in features_list if f.get("years_of_experience") is not None]
-        yoe_df = pd.DataFrame(yoe_list, columns=["Years of Experience"])
-        yoe_bins = pd.cut(
-            yoe_df["Years of Experience"],
-            bins=[-1, 2, 5, 9, 12, 100],
-            labels=["Entry (<2y)", "Mid-level (2-5y)", "Ideal Band (5-9y)", "Senior (9-12y)", "Executive (12y+)"]
-        )
-        yoe_counts = yoe_bins.value_counts().reindex(["Entry (<2y)", "Mid-level (2-5y)", "Ideal Band (5-9y)", "Senior (9-12y)", "Executive (12y+)"])
-        
-        # 2. Location segments mapping
-        loc_cats = []
-        for f in features_list:
-            loc = (f.get("location") or "").lower()
-            country = (f.get("country") or "").lower()
-            in_target = any(c in loc for c in config.TARGET_CITIES)
-            in_india = country == "india" or any(c in loc for c in config.TARGET_CITIES)
-            if in_target:
-                loc_cats.append("Target Cities (India)")
-            elif in_india:
-                loc_cats.append("Other India")
-            else:
-                loc_cats.append("Global")
-        loc_df = pd.DataFrame(loc_cats, columns=["Location"])
-        loc_counts = loc_df["Location"].value_counts()
-        
-        # 3. Honeypot check metrics
-        hp_flags_fired = []
-        total_hp = 0
-        for r in scored_candidates:
-            if r["is_honeypot_flagged"]:
-                total_hp += 1
-                for note in r["notes"]:
-                    if "HONEYPOT FLAGGED" in note:
-                        flags = note.replace("HONEYPOT FLAGGED:", "").strip().split(", ")
-                        hp_flags_fired.extend(flags)
-        hp_counts = pd.Series(hp_flags_fired).value_counts() if hp_flags_fired else pd.Series()
+        # Read pre-calculated aggregates from session state
+        yoe_counts = st.session_state.yoe_counts
+        loc_counts = st.session_state.loc_counts
+        total_hp = st.session_state.total_hp
+        hp_counts = st.session_state.hp_counts
         
         # Render charts
         col_chart1, col_chart2 = st.columns(2)
@@ -1164,54 +1183,12 @@ if "has_run" in st.session_state and st.session_state.has_run:
                 config.BEHAVIORAL_MULTIPLIER_FLOOR = c_beh_floor
                 config.HONEYPOT_FLAG_THRESHOLD = c_hp_thresh
                 
-                # Check if semantic model engine switched
-                model_switched = False
+                # Update model engine preference
                 target_cache = "BGE" in c_model_engine
+                st.session_state.initial_engine_mode = "BGE Dense Vectors (Precomputed)" if target_cache else "TF-IDF + LSA (Bag of Words)"
                 
-                if st.session_state.cache_used != target_cache:
-                    model_switched = True
-                    
-                if model_switched:
-                    if target_cache and cache_path.exists():
-                        # Switch to precomputed BGE dense vector similarities
-                        data = np.load(cache_path, allow_pickle=True)
-                        cached_ids = set(data["candidate_ids"])
-                        cids = [f["candidate_id"] for f in features_list]
-                        
-                        if all(cid in cached_ids for cid in cids):
-                            jd_emb = data["jd_embedding"]
-                            c_emb = data["candidate_embeddings"]
-                            cached_list = list(data["candidate_ids"])
-                            id2row = {cid: i for i, cid in enumerate(cached_list)}
-                            rows = [id2row[cid] for cid in cids]
-                            sims = (c_emb[rows] @ jd_emb.T).squeeze()
-                            
-                            st.session_state.semantic_scores = (sims + 1.0) / 2.0
-                            st.session_state.cache_used = True
-                            st.session_state.model_used = "BGE Dense Semantic Cache"
-                        else:
-                            st.error("Uploaded candidate pool IDs do not match precomputed cache. Cannot switch model.")
-                            model_switched = False
-                    else:
-                        # Switch to Bag-of-Words
-                        texts = [f["full_text"] for f in features_list]
-                        _, _, jd_vec, c_vecs = fit_semantic_space(st.session_state.jd_text, texts)
-                        
-                        st.session_state.semantic_scores = score_semantic_fit_batch(jd_vec, c_vecs)
-                        st.session_state.cache_used = False
-                        st.session_state.model_used = "TF-IDF + LSA (Bag-of-Words)"
-                
-                # Recalculate everything
-                t_recal_start = time.time()
-                new_results = [
-                    {**composite.score_candidate(feats, float(sem)), "features": feats}
-                    for feats, sem in zip(features_list, st.session_state.semantic_scores)
-                ]
-                new_results.sort(key=lambda r: (-round(r["final_score"], 6), r["candidate_id"]))
-                st.session_state.scored_candidates = new_results
-                
-                st.success(f"Recalibration completed in {time.time()-t_recal_start:.3f} seconds!")
-                st.balloons()
+                st.session_state.has_run = False
+                st.success("Calibration applied. Recalibrating pool...")
                 time.sleep(0.5)
                 st.rerun()
 
