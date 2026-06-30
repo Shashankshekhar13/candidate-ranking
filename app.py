@@ -46,8 +46,25 @@ def ensure_data_files():
 
     for filename, url in files.items():
         local_path = data_dir / filename
+        
+        # Check expected size from HEAD request
+        try:
+            r_head = requests.head(url, timeout=15, allow_redirects=True)
+            r_head.raise_for_status()
+            expected_size = int(r_head.headers.get("content-length", 0))
+        except Exception:
+            expected_size = 0
+
+        # If file exists and size matches, skip download
         if local_path.exists():
-            continue
+            if expected_size == 0 or local_path.stat().st_size == expected_size:
+                continue
+            else:
+                # Delete partial/corrupted file
+                try:
+                    local_path.unlink()
+                except Exception:
+                    pass
 
         progress_text = st.empty()
         progress_text.info(f"First-time setup: downloading {filename}...")
@@ -69,6 +86,12 @@ def ensure_data_files():
             bar.empty()
             progress_text.empty()
         except Exception as e:
+            # Clean up partial file on failure to avoid leaving a corrupted file
+            if local_path.exists():
+                try:
+                    local_path.unlink()
+                except Exception:
+                    pass
             progress_text.error(f"Failed to download {filename}: {e}")
             st.stop()
 
