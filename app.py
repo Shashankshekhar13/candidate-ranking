@@ -110,7 +110,7 @@ def company_logo_html(company: str, size: int = 36) -> str:
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Candidate Ranking AI Workspace",
+    page_title="TalentLens AI",
     page_icon=" ",
     layout="wide",
 )
@@ -393,12 +393,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── Header ────────────────────────────────────────────────────────────────────
-st.title("Candidate Ranking AI Workspace")
-st.markdown(
-    "<p style='font-size:1.15rem; color:#94a3b8; margin-top:-15px;'>"
-    "Production talent mapping, advanced integrity analytics, and interactive weighting</p>",
-    unsafe_allow_html=True
-)
+st.title("TalentLens AI")
+st.caption("An AI recruiter that understands candidates, not just keywords.")
 
 # ── File Paths & Preload checks ───────────────────────────────────────────────
 cache_path = config.DATA_DIR / "embeddings_cache.npz"
@@ -1161,9 +1157,9 @@ else:
     # ── Landing/Welcome Page ──────────────────────────────────────────────────
     st.markdown("""
     <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #312e81; border-radius: 14px; padding: 32px; margin-bottom: 28px; text-align: center;">
-        <h2 style="font-family:'Outfit', sans-serif; font-weight:800; color:#f8fafc; margin-bottom: 12px; margin-top: 0;"> Candidate Ranking AI Dashboard</h2>
+        <h2 style="font-family:'Outfit', sans-serif; font-weight:800; color:#f8fafc; margin-bottom: 12px; margin-top: 0;"> TalentLens AI</h2>
         <p style="color:#cbd5e1; font-size:1.1rem; max-width: 800px; margin: 0 auto 16px;">
-            A production-grade recruitment scoring system that evaluates candidates based on deep career history, production-level skill deployment context, behavioral patterns, and candidate verification.
+            An AI recruiter that understands candidates, explains every decision, catches suspicious profiles, and finds the best fit through semantic reasoning — not keyword matching.
         </p>
         <span style="display:inline-block; background:rgba(99, 102, 241, 0.15); border:1px solid rgba(99, 102, 241, 0.3); padding:4px 12px; border-radius:6px; font-size:0.85rem; color:#a5b4fc; font-weight:600;">
             👈 Configure sourcing files in the sidebar and click "Run Scoring Pipeline" to begin.

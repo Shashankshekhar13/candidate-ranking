@@ -1,7 +1,8 @@
-# Candidate Ranking AI — Redrob H2S Hackathon
+# TalentLens AI — Redrob × H2S Data & AI Challenge
 
-AI system that ranks candidates the way a great recruiter would: understanding
-who genuinely fits the role, not matching keywords.
+An AI recruiter that understands candidates, explains every decision, catches
+suspicious profiles, and finds the best fit through semantic reasoning — not
+keyword matching.
 
 ## Reproduce the submission in one command
 
