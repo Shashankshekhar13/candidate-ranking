@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="TalentLens AI Logo" width="320">
+</p>
+
 # TalentLens AI — Redrob × H2S Data & AI Challenge
 
 An AI recruiter that understands candidates, explains every decision, catches
