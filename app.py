@@ -1,13 +1,3 @@
-"""
-app.py — Streamlit demo for the Candidate Ranking AI
-
-Deploy to Streamlit Cloud (or HF Spaces / Replit) to generate the
-required sandbox link for hackathon submission.
-
-Run locally:
-    streamlit run app.py
-"""
-
 import csv
 import json
 import sys
@@ -102,8 +92,6 @@ def ensure_data_files():
             st.stop()
 
     return True
-
-ensure_data_files()
 
 DOMAIN_MAP = {
     "zomato": "zomato.com",
@@ -495,7 +483,7 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("🔍 Initial Engine Mode")
     
-    if cache_path.exists():
+    if cache_path.exists() or use_defaults:
         initial_engine = st.selectbox(
             "Semantic Engine",
             ["BGE Dense Vectors (Precomputed)", "TF-IDF + LSA (Bag of Words)"],
@@ -532,6 +520,7 @@ if run_btn:
     with st.spinner("Loading talent pool and documents..."):
         try:
             if use_defaults:
+                ensure_data_files()
                 if not config.CANDIDATES_PATH.exists():
                     st.error("data/candidates.jsonl not found. Upload a file instead.")
                     st.stop()
