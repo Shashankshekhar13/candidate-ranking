@@ -592,11 +592,12 @@ if "has_run" in st.session_state and st.session_state.has_run:
     """, unsafe_allow_html=True)
     
     # Tabs layout
-    tab_dash, tab_anal, tab_jd, tab_cal = st.tabs([
-        "Recruiter Leaderboard", 
-        "Talent Pool Analytics", 
+    tab_dash, tab_anal, tab_jd, tab_cal, tab_compare = st.tabs([
+        "Recruiter Leaderboard",
+        "Talent Pool Analytics",
         "Job Requirements Config",
-        "Pipeline Calibration"
+        "Pipeline Calibration",
+        "Compare",
     ])
     
     # ── TAB 1: DASHBOARD / LEADERBOARD ────────────────────────────────────────
@@ -1145,13 +1146,44 @@ if "has_run" in st.session_state and st.session_state.has_run:
                     {**composite.score_candidate(feats, float(sem)), "features": feats}
                     for feats, sem in zip(features_list, st.session_state.semantic_scores)
                 ]
-                new_results.sort(key=lambda r: (-r["final_score"], r["candidate_id"]))
+                new_results.sort(key=lambda r: (-round(r["final_score"], 6), r["candidate_id"]))
                 st.session_state.scored_candidates = new_results
                 
                 st.success(f"Recalibration completed in {time.time()-t_recal_start:.3f} seconds!")
                 st.balloons()
                 time.sleep(0.5)
                 st.rerun()
+
+    # ── TAB 5: COMPARE TWO CANDIDATES ──────────────────────────────────────────
+    with tab_compare:
+        st.markdown("### Compare Two Candidates")
+        options = {f"#{i+1} {r['features']['current_title']} — {r['candidate_id']}": r
+                   for i, r in enumerate(scored_candidates[:50])}
+        col_a, col_b = st.columns(2)
+        with col_a:
+            choice_a = st.selectbox("Candidate A", list(options.keys()), key="cmp_a")
+        with col_b:
+            choice_a_idx = list(options.keys()).index(choice_a)
+            default_b = min(choice_a_idx + 1, len(options) - 1)
+            choice_b = st.selectbox("Candidate B", list(options.keys()),
+                                      index=default_b, key="cmp_b")
+
+        a, b = options[choice_a], options[choice_b]
+        metrics = [
+            ("Final Score", "final_score", "{:.1%}"),
+            ("Must-Have Skills", "must_have_score", "{:.1%}"),
+            ("Semantic Fit", "semantic_fit_score", "{:.1%}"),
+            ("Experience Fit", "experience_fit", "{:.2f}x"),
+            ("Location Fit", "location_fit", "{:.2f}x"),
+            ("Behavioral Mult.", "behavioral_multiplier", "{:.2f}x"),
+        ]
+        for label, key, fmt in metrics:
+            va, vb = a[key], b[key]
+            winner = "A" if va > vb else ("B" if vb > va else "tie")
+            c1, c2, c3 = st.columns([1, 2, 1])
+            c1.markdown(f"**{fmt.format(va)}**" + (" 🟢" if winner=="A" else ""))
+            c2.markdown(f"<center>{label}</center>", unsafe_allow_html=True)
+            c3.markdown(f"**{fmt.format(vb)}**" + (" 🟢" if winner=="B" else ""))
 
 else:
     # ── Landing/Welcome Page ──────────────────────────────────────────────────

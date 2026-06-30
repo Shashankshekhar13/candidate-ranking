@@ -94,8 +94,8 @@ def main():
     ]
     print(f"      Done  ({time.time()-t3:.1f}s)", flush=True)
 
-    # sort: descending score, then ascending candidate_id for ties
-    results.sort(key=lambda r: (-r["final_score"], r["candidate_id"]))
+    # sort: descending score (rounded to 6 decimal places to match CSV precision), then ascending candidate_id for ties
+    results.sort(key=lambda r: (-round(r["final_score"], 6), r["candidate_id"]))
     top = results[: args.top_k]
     feats_by_id = {f["candidate_id"]: f for f in features_list}
 
