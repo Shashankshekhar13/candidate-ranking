@@ -29,6 +29,52 @@ from src.feature_extraction import extract_features
 from src.reasoning import generate_reasoning
 from src.scoring import composite
 from src.scoring.semantic_fit import fit_semantic_space, score_semantic_fit_batch
+import requests
+
+# CHANGE this to match your repo from Hugging Face
+HF_REPO_ID = "Realshashank/talentlens-data"
+
+@st.cache_resource(show_spinner=False)
+def ensure_data_files():
+    data_dir = Path("data")
+    data_dir.mkdir(exist_ok=True)
+
+    files = {
+        "candidates.jsonl": f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main/candidates.jsonl",
+        "embeddings_cache.npz": f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main/embeddings_cache.npz",
+    }
+
+    for filename, url in files.items():
+        local_path = data_dir / filename
+        if local_path.exists():
+            continue
+
+        progress_text = st.empty()
+        progress_text.info(f"First-time setup: downloading {filename}...")
+
+        try:
+            r = requests.get(url, stream=True, timeout=120)
+            r.raise_for_status()
+            total = int(r.headers.get("content-length", 0))
+            downloaded = 0
+
+            bar = st.progress(0)
+            with open(local_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if total > 0:
+                        bar.progress(min(downloaded / total, 1.0))
+
+            bar.empty()
+            progress_text.empty()
+        except Exception as e:
+            progress_text.error(f"Failed to download {filename}: {e}")
+            st.stop()
+
+    return True
+
+ensure_data_files()
 
 DOMAIN_MAP = {
     "zomato": "zomato.com",
