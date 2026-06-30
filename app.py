@@ -72,12 +72,16 @@ def ensure_data_files():
             downloaded = 0
 
             bar = st.progress(0)
+            last_pct = 0
             with open(local_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=1024 * 1024):
                     f.write(chunk)
                     downloaded += len(chunk)
                     if total > 0:
-                        bar.progress(min(downloaded / total, 1.0))
+                        pct = int((downloaded / total) * 100)
+                        if pct >= last_pct + 5:
+                            bar.progress(pct / 100.0)
+                            last_pct = pct
 
             bar.empty()
             progress_text.empty()
