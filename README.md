@@ -93,7 +93,7 @@ candidate-ranking-ai/
 │   ├── candidates.jsonl
 │   └── job_description.md
 └── outputs/
-    └── submission.csv
+    └── submission.xlsx
 ```
 
 ## Upgrading to GPU embeddings (Version 2)
