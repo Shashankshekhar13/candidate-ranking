@@ -2,9 +2,6 @@
 data/candidates.jsonl
 data/embeddings_cache.npz
 
-# Intermediate outputs
-outputs/submission.csv
-
 # Python cache
 __pycache__/
 *.pyc
