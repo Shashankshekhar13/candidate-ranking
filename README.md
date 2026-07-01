@@ -92,7 +92,7 @@ Is this profile even real?                  (honeypot integrity detection)
 
 <div align="center">
 
-### [Open TalentLens AI](YOUR_STREAMLIT_URL_HERE)
+### [Open TalentLens AI](https://tinyurl.com/TalentLens-AI)
 
 *Tick "Use dataset files from data/ folder" then click **Run Scoring Pipeline***
 
