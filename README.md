@@ -271,33 +271,7 @@ streamlit run app.py
 
 ```bash
 python -m pytest tests/ -v
-```
 
-```
-tests/test_pipeline.py::TestFeatureExtraction::test_basic_fields_present         PASSED
-tests/test_pipeline.py::TestFeatureExtraction::test_expert_zero_duration_flagged  PASSED
-tests/test_pipeline.py::TestFeatureExtraction::test_career_overlap_detected       PASSED
-tests/test_pipeline.py::TestFeatureExtraction::test_no_career_overlap_on_sequential PASSED
-tests/test_pipeline.py::TestHardFilters::test_in_band_experience_scores_high     PASSED
-tests/test_pipeline.py::TestHardFilters::test_too_junior_experience_scores_low   PASSED
-tests/test_pipeline.py::TestHardFilters::test_target_city_scores_full            PASSED
-tests/test_pipeline.py::TestHardFilters::test_outside_india_scores_low           PASSED
-tests/test_pipeline.py::TestHardFilters::test_consulting_only_career_penalised   PASSED
-tests/test_pipeline.py::TestMustHaveSkills::test_strong_ai_candidate_scores_high PASSED
-tests/test_pipeline.py::TestMustHaveSkills::test_keyword_stuffer_scores_lower    PASSED
-tests/test_pipeline.py::TestBehavioralSignal::test_active_engaged_near_ceiling   PASSED
-tests/test_pipeline.py::TestBehavioralSignal::test_inactive_candidate_lower      PASSED
-tests/test_pipeline.py::TestHoneypotDetection::test_clean_not_flagged            PASSED
-tests/test_pipeline.py::TestHoneypotDetection::test_expert_zero_duration_flagged PASSED
-tests/test_pipeline.py::TestHoneypotDetection::test_overlapping_flagged          PASSED
-tests/test_pipeline.py::TestComposite::test_strong_candidate_above_07            PASSED
-tests/test_pipeline.py::TestComposite::test_honeypot_near_zero                   PASSED
-tests/test_pipeline.py::TestComposite::test_civil_engineer_lower_than_ml         PASSED
-
-19 passed in 1.23s
-```
-
----
 
 ## Project Structure
 
