@@ -166,31 +166,7 @@ Is this profile even real?                  (honeypot integrity detection)
 
 ## Architecture
 
-```
-JD + 100,000 Candidates
-         |
-         v
-Feature Extraction          (src/feature_extraction.py)
-Career history, skills, education, location, 23 redrob_signals
-         |
-         +--------> Must-Have Skills  55%   (career-history weighted 3x)
-         |
-         +--------> Semantic Fit      45%   (BGE embeddings or TF-IDF+LSA)
-         |
-         = CORE SKILL FIT  <-- the gate
-         |
-         x  Experience multiplier   [0.50 -- 1.0]
-         x  Location multiplier     [0.55 -- 1.0]
-         x  Disqualifier guard      [0.30 -- 1.0]
-         x  Behavioral multiplier   [0.40 -- 1.1]
-         x  Honeypot multiplier     [0.01 or 1.0]
-         |
-         v
-Top 100 ranked XLSX
-candidate_id · rank · score · reasoning
-```
-
----
+![Pipeline](screenshots/architecture.png)
 
 ## Scoring Components
 
