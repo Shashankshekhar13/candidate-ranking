@@ -22,45 +22,47 @@
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
-```
+```text
 candidate-ranking-ai/
-|
-+-- rank.py                        # single entrypoint -- run this
-+-- app.py                         # Streamlit workspace (5 tabs)
-+-- requirements.txt
-+-- logo.png
-|
-+-- src/
-|   +-- config.py                  # all weights, constants, JD-derived rules
-|   +-- data_loader.py             # .jsonl and .jsonl.gz support
-|   +-- feature_extraction.py      # raw JSON to scoring-ready feature dict
-|   +-- reasoning.py               # deterministic fact-grounded reasoning
-|   \-- scoring/
-|       +-- composite.py           # multiplies all components into final score
-|       +-- must_have_skills.py    # embeddings / vector-DB / eval / Python
-|       +-- semantic_fit.py        # TF-IDF + LSA (CPU semantic engine)
-|       +-- hard_filters.py        # experience, location, JD disqualifiers
-|       +-- behavioral_signal.py   # redrob_signals engagement multiplier
-|       \-- honeypot_detection.py # 7-point integrity check
-|
-+-- scripts/
-|   +-- validate_submission.py     # official hackathon validator (unchanged)
-|   +-- precompute_embeddings.py   # GPU: generate BGE cache once
-|   \-- ollama_rerank.py          # optional: Ollama reranker on top 200
-+-- eval/
-|   \-- evaluate.py               # private gold-set NDCG/MAP eval harness
-|
-+-- tests/
-|   \-- test_pipeline.py          # 19 unit tests (all passing)
-|
-+-- data/
-|   +-- job_description.md         # JD (committed)
-|   +-- sample_candidates.json     # 50-candidate smoke test sample
-|
-\-- outputs/
-    \-- submission.xlsx           # final ranked output (portal-ready)
+│
+├── rank.py                          # Single entry point (run this)
+├── app.py                           # Streamlit workspace (5 tabs)
+├── requirements.txt
+├── logo.png
+│
+├── src/
+│   ├── config.py                    # Weights, constants, JD-derived rules
+│   ├── data_loader.py               # Supports .jsonl and .jsonl.gz datasets
+│   ├── feature_extraction.py        # Extracts candidate features from raw JSON
+│   ├── reasoning.py                 # Deterministic fact-grounded reasoning
+│   │
+│   └── scoring/
+│       ├── composite.py             # Computes final composite ranking score
+│       ├── must_have_skills.py      # Skill matching using embeddings/vector DB
+│       ├── semantic_fit.py          # TF-IDF + LSA semantic similarity engine
+│       ├── hard_filters.py          # Experience, location & JD eligibility filters
+│       ├── behavioral_signal.py     # Engagement-based behavioral scoring
+│       └── honeypot_detection.py    # 7-point integrity and fraud detection
+│
+├── scripts/
+│   ├── validate_submission.py       # Official hackathon validator
+│   ├── precompute_embeddings.py     # Generate BGE embedding cache (GPU)
+│   └── ollama_rerank.py             # Optional Ollama reranking (Top-200)
+│
+├── eval/
+│   └── evaluate.py                  # NDCG/MAP evaluation harness
+│
+├── tests/
+│   └── test_pipeline.py             # Unit tests
+│
+├── data/
+│   ├── job_description.md           # Job description
+│   └── sample_candidates.json       # Sample candidate dataset
+│
+└── outputs/
+    └── submission.xlsx              # Final ranked submission
 ```
 
 ---
