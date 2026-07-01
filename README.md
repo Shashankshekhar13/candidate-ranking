@@ -15,7 +15,6 @@
 [![BGE Embeddings](https://img.shields.io/badge/BGE-Dense%20Embeddings-6366F1?style=for-the-badge)](https://huggingface.co/BAAI/bge-base-en-v1.5)
 [![Runtime](https://img.shields.io/badge/Runtime-~80s%20on%20CPU-22C55E?style=for-the-badge)]()
 [![Honeypots](https://img.shields.io/badge/Honeypots%20in%20Top%20100-0%25-22C55E?style=for-the-badge)]()
-[![Tests](https://img.shields.io/badge/Tests-19%20Passing-22C55E?style=for-the-badge)]()
 
 [Live Demo](YOUR_STREAMLIT_URL_HERE) 
 
