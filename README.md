@@ -17,7 +17,7 @@
 [![Honeypots](https://img.shields.io/badge/Honeypots%20in%20Top%20100-0%25-22C55E?style=for-the-badge)]()
 [![Tests](https://img.shields.io/badge/Tests-19%20Passing-22C55E?style=for-the-badge)]()
 
-[Live Demo](YOUR_STREAMLIT_URL_HERE) ·
+[Live Demo](YOUR_STREAMLIT_URL_HERE) 
 
 </div>
 
