@@ -16,7 +16,7 @@
 [![Runtime](https://img.shields.io/badge/Runtime-~80s%20on%20CPU-22C55E?style=for-the-badge)]()
 [![Honeypots](https://img.shields.io/badge/Honeypots%20in%20Top%20100-0%25-22C55E?style=for-the-badge)]()
 
-[Live Demo](https://tinyurl.com/TalentLens-AI) 
+[Live Demo](https://tinyurl.com/TalentLens-AI) - https://tinyurl.com/TalentLens-AI
 
 </div>
 
