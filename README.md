@@ -272,6 +272,7 @@ streamlit run app.py
 ```bash
 python -m pytest tests/ -v
 
+---
 
 ## Project Structure
 
