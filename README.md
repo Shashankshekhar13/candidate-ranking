@@ -1,145 +1,326 @@
-<p align="center">
-  <img src="logo.png" alt="TalentLens AI Logo" width="320">
-</p>
+<div align="center">
 
-# TalentLens AI — Redrob × H2S Data & AI Challenge
+<img src="logo.png" alt="TalentLens AI" width="300"/>
 
-An AI recruiter that understands candidates, explains every decision, catches
-suspicious profiles, and finds the best fit through semantic reasoning — not
-keyword matching.
+# TalentLens AI
 
-## Reproduce the submission in one command
+### An AI recruiter that understands candidates — not just keywords
 
-```bash
-python rank.py \
-  --candidates data/candidates.jsonl \
-  --jd data/job_description.md \
-  --out outputs/submission.xlsx
+*Built for the [Redrob x H2S Data & AI Challenge](https://hack2skill.com)*
+
+---
+
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Live%20Demo-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](YOUR_STREAMLIT_URL_HERE)
+[![BGE Embeddings](https://img.shields.io/badge/BGE-Dense%20Embeddings-6366F1?style=for-the-badge)](https://huggingface.co/BAAI/bge-base-en-v1.5)
+[![Runtime](https://img.shields.io/badge/Runtime-~80s%20on%20CPU-22C55E?style=for-the-badge)]()
+[![Honeypots](https://img.shields.io/badge/Honeypots%20in%20Top%20100-0%25-22C55E?style=for-the-badge)]()
+
+[Live Demo](https://tinyurl.com/TalentLens-AI) 
+
+</div>
+
+---
+
+## 📁 Project Structure
+
+```text
+candidate-ranking-ai/
+│
+├── rank.py                          # Single entry point (run this)
+├── app.py                           # Streamlit workspace (5 tabs)
+├── requirements.txt
+├── logo.png
+│
+├── src/
+│   ├── config.py                    # Weights, constants, JD-derived rules
+│   ├── data_loader.py               # Supports .jsonl and .jsonl.gz datasets
+│   ├── feature_extraction.py        # Extracts candidate features from raw JSON
+│   ├── reasoning.py                 # Deterministic fact-grounded reasoning
+│   │
+│   └── scoring/
+│       ├── composite.py             # Computes final composite ranking score
+│       ├── must_have_skills.py      # Skill matching using embeddings/vector DB
+│       ├── semantic_fit.py          # TF-IDF + LSA semantic similarity engine
+│       ├── hard_filters.py          # Experience, location & JD eligibility filters
+│       ├── behavioral_signal.py     # Engagement-based behavioral scoring
+│       └── honeypot_detection.py    # 7-point integrity and fraud detection
+│
+├── scripts/
+│   ├── validate_submission.py       # Official hackathon validator
+│   ├── precompute_embeddings.py     # Generate BGE embedding cache (GPU)
+│   └── ollama_rerank.py             # Optional Ollama reranking (Top-200)
+│
+├── eval/
+│   └── evaluate.py                  # NDCG/MAP evaluation harness
+│
+├── tests/
+│   └── test_pipeline.py             # Unit tests
+│
+├── data/
+│   ├── job_description.md           # Job description
+│   └── sample_candidates.json       # Sample candidate dataset
+│
+└── outputs/
+    └── submission.xlsx              # Final ranked submission
 ```
 
-Runtime: ~80s on CPU, well under the 300s/16GB/no-network budget.
-Validates cleanly with `python scripts/validate_submission.py outputs/submission.xlsx`.
+---
+
+## What is TalentLens AI?
+
+TalentLens AI ranks **100,000 candidates** against a job description the way a great recruiter would — by understanding who **genuinely fits the role**, not by matching keywords.
+
+Most systems do this:
+
+```
+Candidate has "Python" + "FAISS" + "Vector DB"  =>  80% match
+```
+
+TalentLens does this:
+
+```
+Where did they actually USE these skills?   (career history, not skill list)
+Did their seniority grow over time?         (career trajectory)
+Are they actually available and engaged?    (behavioral signals)
+Is this profile even real?                  (honeypot integrity detection)
+```
+
+---
+
+## Live Demo
+
+<div align="center">
+
+### [Open TalentLens AI](https://tinyurl.com/TalentLens-AI)
+
+*Tick "Use dataset files from data/ folder" then click **Run Scoring Pipeline***
+
+</div>
+
+---
+
+## Dashboard
+
+### Recruiter Leaderboard
+> Ranked candidates with **Strength** signals in green and **Concerns** in amber — every decision explained.
+
+![Leaderboard](screenshots/leaderboard.png)
+
+---
+
+### Talent Pool Analytics
+> Experience band distribution and location segmentation across all 100,000 candidates.
+
+![Analytics](screenshots/analytics.png)
+
+---
+
+### Job Requirements Config and AI Guardrails
+> JD-parsed requirements and system exclusion rules — fully transparent scoring logic.
+
+![JD Config](screenshots/jd_config.png)
+
+---
+
+### Pipeline Calibration
+> Live weight tuning — adjust scoring components and watch the leaderboard rerank in real time.
+
+![Calibration](screenshots/calibration.png)
+
+---
+
+### Candidate Comparison
+> Side-by-side scoring breakdown across all dimensions for any two candidates.
+
+![Compare](screenshots/compare.png)
+
+---
+
+## Results
+
+<div align="center">
+
+| Metric | Value |
+|:---|:---:|
+| Candidates scored | **100,000** |
+| Wall-clock runtime | **~80s** (budget: 300s) |
+| Memory usage | **< 8 GB** (budget: 16 GB) |
+| Network calls during ranking | **0** |
+| Honeypots in top 100 | **0 (0.0%)** |
+| Top candidate score | **83.8%** |
+
+</div>
+
+### Top 5 Ranked Candidates
+
+| Rank | Role | Company | Score | Key Signals |
+|:---:|:---|:---|:---:|:---|
+| 1 | Search Engineer | Sarvam AI | 83.8% | 7.6 yrs · Gurgaon · Embeddings + Vector DB · 94% response rate |
+| 2 | Sr. ML Engineer | Genpact AI | 82.6% | 6.1 yrs · Pune · Embeddings + Vector DB + Ranking Eval |
+| 3 | Sr. ML Engineer | Zomato | 81.2% | 7.2 yrs · Noida · 15d notice · Open to work |
+| 4 | Rec. Systems Eng. | Wysa | 80.4% | 7.9 yrs · Noida · Embeddings + Vector DB + Eval |
+| 5 | NLP Engineer | Haptik | 75.1% | 6.5 yrs · Pune · 15d notice · Full skill match |
+
+---
 
 ## Architecture
 
 ```
-JD + 100k candidates
-        │
-        ▼
-  Feature extraction      (src/feature_extraction.py)
-  Career, skills, signals, location, dates
-        │
-        ├──▶ Core Skill Fit (gate, 100% of base score)
-        │         Must-have skills (55%)     ← career-history weighted
-        │         Semantic fit / LSA (45%)   ← TF-IDF + TruncatedSVD
-        │
-        ├──▶ × Experience multiplier  [0.5, 1.0]
-        ├──▶ × Location multiplier    [0.55, 1.0]
-        ├──▶ × Disqualifier multiplier (JD red flags)
-        ├──▶ × Behavioral multiplier  (engagement signals)
-        └──▶ × Honeypot multiplier    (anomaly detection)
-                │
-                ▼
-          Top 100 CSV (candidate_id, rank, score, reasoning)
+JD + 100,000 Candidates
+         |
+         v
+Feature Extraction          (src/feature_extraction.py)
+Career history, skills, education, location, 23 redrob_signals
+         |
+         +--------> Must-Have Skills  55%   (career-history weighted 3x)
+         |
+         +--------> Semantic Fit      45%   (BGE embeddings or TF-IDF+LSA)
+         |
+         = CORE SKILL FIT  <-- the gate
+         |
+         x  Experience multiplier   [0.50 -- 1.0]
+         x  Location multiplier     [0.55 -- 1.0]
+         x  Disqualifier guard      [0.30 -- 1.0]
+         x  Behavioral multiplier   [0.40 -- 1.1]
+         x  Honeypot multiplier     [0.01 or 1.0]
+         |
+         v
+Top 100 ranked XLSX
+candidate_id · rank · score · reasoning
 ```
 
-### Design choices
+---
 
-**Skills as the gate, not an additive term.**
-Location and years-of-experience are JD-described secondary factors ("flexible",
-"a range, not a requirement"). A Civil Engineer in Gurgaon with 7 years experience
-should not score above an NLP Engineer in London just because location/experience
-add as much to the sum as skills do. So location and experience are multiplicative
-*modifiers* on the skill-fit core, not competing additive components.
+## Scoring Components
 
-**Career-history weighted skill matching.**
-A skill appearing in an actual job description (what the person worked on) is
-weighted 3× over the same term appearing only in the skills list (easy to fake).
-This directly counters the "Data Engineer listing 15 advanced ML skills none of
-which appear in their career history" honeypot/keyword-stuffer pattern.
+| Component | Weight | Method | Purpose |
+|:---|:---:|:---|:---|
+| **Must-Have Skills** | 55% | Regex + duration depth | Career-history mentions weighted **3x** over skill-list tags |
+| **Semantic Fit** | 45% | BGE cosine / TF-IDF+LSA | Finds right-skills-wrong-buzzwords candidates |
+| **Experience Multiplier** | x mod | Triangular, peak 6-8 yrs | Soft floor (0.5x) so strong-skill candidates still pass |
+| **Location Multiplier** | x mod | Geography check | Target India cities = 1.0x · Relocating = 0.75x · Global = 0.55x |
+| **Disqualifier Guard** | x mod | Rule-based | Consulting-only · pure research · CV/Speech without NLP |
+| **Behavioral Signal** | x mod | redrob_signals | Response rate · last active · open-to-work · notice period |
+| **Honeypot Shield** | x mod | 7-point anomaly check | 0.01x if 2+ checks fire · 1.0x otherwise |
 
-**TF-IDF + LSA semantic fit (not a neural model).**
-Captures topical overlap (recommendation systems, retrieval, ranking) without
-requiring model weights to be downloaded at runtime — satisfying the no-network
-constraint by construction. Runs in ~55s on CPU for 100k candidates.
-
-**Multiplicative combination.**
-`final_score = core_fit × exp_mult × loc_mult × disqualifier_mult × behavioral_mult × honeypot_mult`
-A multiplicative model means a serious red flag (honeypot, pure-consulting career)
-collapses the score; an additive model would let a strong base score paper it over.
-
-**Deterministic reasoning generator.**
-Every fact in the reasoning column is pulled directly from the candidate's parsed
-data — no LLM call, no hallucination risk, no network required. Variation comes
-from rotating sentence templates chosen deterministically per candidate_id.
-
-## Project structure
+### Final Score Formula
 
 ```
-candidate-ranking-ai/
-├── rank.py                      # single entrypoint — run this
-├── requirements.txt
-├── src/
-│   ├── config.py                # all weights, constants, JD-derived rules
-│   ├── data_loader.py
-│   ├── feature_extraction.py
-│   ├── reasoning.py
-│   └── scoring/
-│       ├── hard_filters.py      # experience band, location, JD disqualifiers
-│       ├── must_have_skills.py  # production embeddings/vector-DB/eval/Python
-│       ├── semantic_fit.py      # TF-IDF + LSA
-│       ├── behavioral_signal.py # redrob_signals engagement multiplier
-│       ├── honeypot_detection.py
-│       └── composite.py         # combines all components
-├── scripts/
-│   └── validate_submission.py  # official hackathon validator (unchanged)
-├── data/
-│   ├── candidates.jsonl
-│   └── job_description.md
-└── outputs/
-    └── submission.xlsx
+final_score = core_skill_fit
+            x experience_multiplier
+            x location_multiplier
+            x disqualifier_multiplier
+            x behavioral_multiplier
+            x honeypot_multiplier
 ```
 
-## Upgrading to GPU embeddings (Version 2)
+> Multiplicative, not additive — a red flag collapses the score regardless of skill fit.
 
-If you have a GPU (RTX 3050 or better), swap the semantic fit component for
-`sentence-transformers/BAAI/bge-large-en-v1.5`. This should improve NDCG@10
-meaningfully for the "right experience, wrong keywords" candidates the JD cares about.
+---
 
-**Critical constraint**: the submission validator runs with no network. You must
-**precompute and cache** the embeddings:
+## Key Design Decisions
+
+<details>
+<summary><b>Why multiplicative scoring, not additive?</b></summary>
+
+A Civil Engineer in Gurgaon with 7 years experience should not outscore an NLP Engineer
+in London just because location and experience add as much to the sum as skills do.
+Skills are the gate. Everything else modulates but cannot rescue a zero-skill candidate.
+
+</details>
+
+<details>
+<summary><b>Why weight career history 3x over skill lists?</b></summary>
+
+A skill appearing in an actual job description (what the person built and shipped) is
+far harder to fake than adding "Pinecone" to a skills list. This directly counters
+the Data Engineer who lists 15 advanced ML skills that never appear in their
+career history — the exact trap the JD calls out.
+
+</details>
+
+<details>
+<summary><b>Why BGE embeddings with TF-IDF fallback?</b></summary>
+
+BGE dense vectors catch the right-experience-wrong-buzzwords candidate that keyword
+matching misses entirely. TF-IDF plus LSA is the CPU-only fallback when no
+precomputed cache is present. Both paths satisfy the zero-network-calls constraint.
+
+</details>
+
+<details>
+<summary><b>Why 7 independent honeypot checks?</b></summary>
+
+Requiring 2+ independent anomaly checks keeps the false-positive rate low on
+genuinely unusual real profiles, while reliably catching synthetically constructed
+honeypots that fail multiple checks simultaneously.
+
+</details>
+
+
+---
+
+## Quick Start
 
 ```bash
-# One-time precompute (can use network, takes ~10 min on RTX 3050)
-python scripts/precompute_embeddings.py \
-  --candidates data/candidates.jsonl \
-  --jd data/job_description.md \
-  --out data/embeddings_cache.npz
+# 1. Clone and install
+git clone https://github.com/YOUR_USERNAME/candidate-ranking-ai.git
+cd candidate-ranking-ai
 
-# rank.py then loads from cache, no network needed
-python rank.py --use-embedding-cache data/embeddings_cache.npz
+python -m venv venv
+venv\Scripts\activate        # Windows
+
+pip install -r requirements.txt
+
+# 2. Add data (not committed -- 487MB)
+# Copy candidates.jsonl into data/candidates.jsonl
+
+# 3. Run ranking pipeline
+python rank.py
+
+# 4. Validate output
+python scripts/validate_submission.py outputs/submission.xlsx
+
 ```
 
-## Upgrading to Ollama reranker (Version 3)
 
-Pull a small local model for reranking only the top 200 (not all 100k):
+### Run Streamlit App
 
 ```bash
-ollama pull qwen2.5:7b
-python scripts/rerank_top200.py --input outputs/submission.csv --out outputs/submission_reranked.csv
+streamlit run app.py
+# Opens at http://localhost:8501
 ```
 
-This is a dev-only step — the reranker output is a static CSV that gets submitted,
-so no model runs at validation time.
+---
 
-## Scoring formula reference
+## Tests
 
-Per `submission_spec.docx`:
-`final_score = 0.50 × NDCG@10 + 0.30 × NDCG@50 + 0.15 × MAP + 0.05 × P@10`
+```bash
+python -m pytest tests/ -v
+```
 
-80% of the score lives in the top 50 picks. Spend calibration effort there, not on rank 90-100.
 
-## AI tool disclosure
 
-This solution was developed with AI-assisted code generation. All code has been
-reviewed, understood, and validated end-to-end by the submitting team.
+---
+
+## Hackathon Scoring Formula
+
+```
+hackathon_score = 0.50 x NDCG@10
+                + 0.30 x NDCG@50
+                + 0.15 x MAP
+                + 0.05 x P@10
+```
+
+**80% of the score lives in the top 50 picks.**
+TalentLens optimizes for precision at the top of the ranking — where recruiter trust is won or lost.
+
+---
+
+
+<div align="center">
+
+**TalentLens AI** &nbsp;·&nbsp; Redrob x H2S Data & AI Challenge &nbsp;·&nbsp; 2026
+
+</div>
